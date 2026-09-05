@@ -29,6 +29,7 @@ export function Gastos() {
   const [conceptos, setConceptos] = useState<ExpenseConcept[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
+  const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
   const [payingId, setPayingId] = useState<string | null>(null);
   const [duplicando, setDuplicando] = useState(false);
 
@@ -128,6 +129,12 @@ export function Gastos() {
     setDuplicando(false);
   }
 
+  async function eliminarGasto(id: string) {
+    if (!window.confirm('¿Borrar este gasto? Esta acción no se puede deshacer.')) return;
+    await supabase.from('expenses').delete().eq('id', id);
+    loadExpenses();
+  }
+
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
@@ -178,11 +185,19 @@ export function Gastos() {
                 </td>
                 {isAdmin && (
                   <td>
-                    {e.estado === 'pendiente' && (
-                      <button className="btn-link" onClick={() => setPayingId(e.id)}>
-                        Marcar pagado
+                    <div style={{ display: 'flex', gap: 10 }}>
+                      {e.estado === 'pendiente' && (
+                        <button className="btn-link" onClick={() => setPayingId(e.id)}>
+                          Marcar pagado
+                        </button>
+                      )}
+                      <button className="btn-link" onClick={() => setEditingExpense(e)}>
+                        Editar
                       </button>
-                    )}
+                      <button className="btn-link" onClick={() => eliminarGasto(e.id)}>
+                        Eliminar
+                      </button>
+                    </div>
                   </td>
                 )}
               </tr>
@@ -192,12 +207,25 @@ export function Gastos() {
       )}
 
       {showForm && (
-        <NuevoGastoModal
+        <GastoFormModal
           tipos={tipos}
           conceptos={conceptos}
           onClose={() => setShowForm(false)}
           onSaved={() => {
             setShowForm(false);
+            loadExpenses();
+          }}
+        />
+      )}
+
+      {editingExpense && (
+        <GastoFormModal
+          tipos={tipos}
+          conceptos={conceptos}
+          expense={editingExpense}
+          onClose={() => setEditingExpense(null)}
+          onSaved={() => {
+            setEditingExpense(null);
             loadExpenses();
           }}
         />
@@ -315,25 +343,28 @@ function Modal({ children, onClose }: { children: React.ReactNode; onClose: () =
   );
 }
 
-function NuevoGastoModal({
+function GastoFormModal({
   tipos,
   conceptos,
+  expense,
   onClose,
   onSaved,
 }: {
   tipos: ExpenseType[];
   conceptos: ExpenseConcept[];
+  expense?: Expense;
   onClose: () => void;
   onSaved: () => void;
 }) {
   const { profile } = useAuth();
-  const [tipoId, setTipoId] = useState('');
-  const [conceptoId, setConceptoId] = useState('');
-  const [proveedor, setProveedor] = useState('');
-  const [monto, setMonto] = useState('');
-  const [fechaVencimiento, setFechaVencimiento] = useState('');
-  const [detalle, setDetalle] = useState('');
-  const [recurrente, setRecurrente] = useState(false);
+  const esEdicion = !!expense;
+  const [tipoId, setTipoId] = useState(expense?.tipo_id || '');
+  const [conceptoId, setConceptoId] = useState(expense?.concepto_id || '');
+  const [proveedor, setProveedor] = useState(expense?.proveedor || '');
+  const [monto, setMonto] = useState(expense ? String(expense.monto) : '');
+  const [fechaVencimiento, setFechaVencimiento] = useState(expense?.fecha_vencimiento || '');
+  const [detalle, setDetalle] = useState(expense?.detalle || '');
+  const [recurrente, setRecurrente] = useState(expense?.recurrente || false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
@@ -350,7 +381,7 @@ function NuevoGastoModal({
     }
     setSaving(true);
     setError('');
-    const { error: insertError } = await supabase.from('expenses').insert({
+    const payload = {
       tipo_id: tipoId,
       concepto_id: conceptoId,
       proveedor: proveedor || null,
@@ -360,11 +391,13 @@ function NuevoGastoModal({
       detalle: detalle || null,
       recurrente,
       periodicidad: recurrente ? 'mensual' : null,
-      creado_por: profile?.id,
-    });
+    };
+    const { error: saveError } = esEdicion
+      ? await supabase.from('expenses').update(payload).eq('id', expense.id)
+      : await supabase.from('expenses').insert({ ...payload, creado_por: profile?.id });
     setSaving(false);
-    if (insertError) {
-      setError(insertError.message);
+    if (saveError) {
+      setError(saveError.message);
       return;
     }
     onSaved();
@@ -372,7 +405,7 @@ function NuevoGastoModal({
 
   return (
     <Modal onClose={onClose}>
-      <h2 style={{ marginTop: 0 }}>Nuevo gasto</h2>
+      <h2 style={{ marginTop: 0 }}>{esEdicion ? 'Editar gasto' : 'Nuevo gasto'}</h2>
       <form onSubmit={handleSubmit}>
         <div className="form-grid">
           <label>
