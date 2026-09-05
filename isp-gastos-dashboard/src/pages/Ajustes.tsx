@@ -2,6 +2,10 @@ import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import type { ExpenseConcept, ExpenseType, Profile, Rol } from '../types';
 
+function mensajeError(err: { code?: string; message: string }, siExisteYa: string) {
+  return err.code === '23505' ? siExisteYa : err.message;
+}
+
 export function Ajustes() {
   const [tipos, setTipos] = useState<ExpenseType[]>([]);
   const [conceptos, setConceptos] = useState<ExpenseConcept[]>([]);
@@ -43,7 +47,7 @@ function TiposGasto({ tipos, onChange }: { tipos: ExpenseType[]; onChange: () =>
     if (!nombre.trim()) return;
     const { error: err } = await supabase.from('expense_types').insert({ nombre: nombre.trim(), color });
     if (err) {
-      setError(err.message);
+      setError(mensajeError(err, 'Ya existe un tipo de gasto con ese nombre.'));
       return;
     }
     setNombre('');
@@ -99,7 +103,7 @@ function Conceptos({
     if (!nombre.trim() || !tipoId) return;
     const { error: err } = await supabase.from('expense_concepts').insert({ nombre: nombre.trim(), tipo_id: tipoId });
     if (err) {
-      setError(err.message);
+      setError(mensajeError(err, 'Ese tipo ya tiene un concepto con ese nombre.'));
       return;
     }
     setNombre('');
@@ -155,7 +159,7 @@ function Usuarios({ usuarios, onChange }: { usuarios: Profile[]; onChange: () =>
     if (!email.trim()) return;
     const { error: err } = await supabase.from('profiles').insert({ email: email.trim().toLowerCase(), nombre: nombre || null, rol });
     if (err) {
-      setError(err.message);
+      setError(mensajeError(err, 'Ese email ya está dado de alta.'));
       return;
     }
     setEmail('');
