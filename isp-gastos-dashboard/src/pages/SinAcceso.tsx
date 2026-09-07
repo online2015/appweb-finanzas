@@ -7,10 +7,11 @@ export function SinAcceso() {
   if (!loading && profile) return <Navigate to="/" replace />;
 
   return (
-    <div className="login-screen">
-      <div className="login-box">
-        <h1>Sin acceso</h1>
-        <p>
+    <div className="login-form-panel" style={{ minHeight: '100dvh', width: '100%' }}>
+      <div className="login-form-inner">
+        <span className="login-eyebrow">Acceso al equipo</span>
+        <h1 className="login-title">Sin acceso</h1>
+        <p className="login-subtitle">
           Tu cuenta ({session?.user.email}) no está habilitada para esta app. Pedile a un
           administrador que te dé de alta desde Ajustes → Usuarios.
         </p>

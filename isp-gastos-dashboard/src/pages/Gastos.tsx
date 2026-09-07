@@ -10,6 +10,14 @@ function formatMonto(monto: number, moneda: string) {
   return new Intl.NumberFormat('es-AR', { style: 'currency', currency: moneda || 'ARS' }).format(monto);
 }
 
+function formatFecha(fechaISO: string) {
+  return new Date(fechaISO + 'T00:00:00').toLocaleDateString('es-AR', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  });
+}
+
 interface Filtros {
   mes: number;
   anio: number;
@@ -166,7 +174,7 @@ export function Gastos() {
               <th>Concepto</th>
               <th>Proveedor</th>
               <th>Ventana</th>
-              <th>Monto</th>
+              <th className="monto">Monto</th>
               <th>Estado</th>
               {isAdmin && <th></th>}
             </tr>
@@ -174,20 +182,20 @@ export function Gastos() {
           <tbody>
             {expenses.map((e) => (
               <tr key={e.id}>
-                <td>{e.fecha_vencimiento}</td>
+                <td>{formatFecha(e.fecha_vencimiento)}</td>
                 <td>{e.expense_types?.nombre}</td>
                 <td>{e.expense_concepts?.nombre}</td>
-                <td>{e.proveedor || '—'}</td>
-                <td>{e.ventana_pago}</td>
-                <td>{formatMonto(e.monto, e.moneda)}</td>
+                <td className="text-muted">{e.proveedor || '—'}</td>
+                <td className="text-muted">{e.ventana_pago}</td>
+                <td className="monto">{formatMonto(e.monto, e.moneda)}</td>
                 <td>
                   <span className={`badge badge-${e.estado}`}>{e.estado}</span>
                 </td>
                 {isAdmin && (
                   <td>
-                    <div style={{ display: 'flex', gap: 10 }}>
+                    <div className="row-actions">
                       {e.estado === 'pendiente' && (
-                        <button className="btn-link" onClick={() => setPayingId(e.id)}>
+                        <button className="btn-link action-primary" onClick={() => setPayingId(e.id)}>
                           Marcar pagado
                         </button>
                       )}
@@ -324,19 +332,8 @@ function FiltrosBar({
 
 function Modal({ children, onClose }: { children: React.ReactNode; onClose: () => void }) {
   return (
-    <div
-      style={{
-        position: 'fixed',
-        inset: 0,
-        background: 'rgba(0,0,0,0.3)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 10,
-      }}
-      onClick={onClose}
-    >
-      <div className="card" style={{ width: 480, background: '#fff' }} onClick={(e) => e.stopPropagation()}>
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-panel" onClick={(e) => e.stopPropagation()}>
         {children}
       </div>
     </div>
@@ -405,7 +402,7 @@ function GastoFormModal({
 
   return (
     <Modal onClose={onClose}>
-      <h2 style={{ marginTop: 0 }}>{esEdicion ? 'Editar gasto' : 'Nuevo gasto'}</h2>
+      <h2>{esEdicion ? 'Editar gasto' : 'Nuevo gasto'}</h2>
       <form onSubmit={handleSubmit}>
         <div className="form-grid">
           <label>
@@ -526,7 +523,7 @@ function MarcarPagadoModal({
 
   return (
     <Modal onClose={onClose}>
-      <h2 style={{ marginTop: 0 }}>Marcar como pagado</h2>
+      <h2>Marcar como pagado</h2>
       <form onSubmit={handleSubmit}>
         <label>
           Fecha de pago

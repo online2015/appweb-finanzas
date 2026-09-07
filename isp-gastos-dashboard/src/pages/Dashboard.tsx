@@ -118,21 +118,46 @@ export function Dashboard() {
       </div>
 
       {loading ? (
-        <div className="empty-state">Cargando...</div>
+        <>
+          <div className="stats-row" style={{ marginTop: 24 }}>
+            <div className="stat-block">
+              <div className="stat-label">Total del mes</div>
+              <div className="skeleton" style={{ height: 44, width: '70%' }} />
+            </div>
+            <div className="stat-block">
+              <div className="stat-label">Pagado</div>
+              <div className="skeleton" style={{ height: 34, width: '65%' }} />
+            </div>
+            <div className="stat-block">
+              <div className="stat-label">Pendiente</div>
+              <div className="skeleton" style={{ height: 34, width: '65%' }} />
+            </div>
+          </div>
+          <div className="charts-row">
+            <div className="chart-block">
+              <p className="chart-title">Distribución por tipo</p>
+              <div className="skeleton" style={{ height: 260, width: '100%' }} />
+            </div>
+            <div className="chart-block">
+              <p className="chart-title">Evolución mensual</p>
+              <div className="skeleton" style={{ height: 260, width: '100%' }} />
+            </div>
+          </div>
+        </>
       ) : (
         <>
           <div className="stats-row" style={{ marginTop: 24 }}>
-            <div className="card">
+            <div className="stat-block">
               <div className="stat-label">Total del mes</div>
               <div className="stat-value">{formatMonto(totalMes)}</div>
             </div>
-            <div className="card">
+            <div className="stat-block">
               <div className="stat-label">Pagado</div>
               <div className="stat-value" style={{ color: 'var(--pagado)' }}>
                 {formatMonto(totalPagado)}
               </div>
             </div>
-            <div className="card">
+            <div className="stat-block">
               <div className="stat-label">Pendiente</div>
               <div className="stat-value" style={{ color: 'var(--pendiente)' }}>
                 {formatMonto(totalPendiente)}
@@ -141,7 +166,7 @@ export function Dashboard() {
           </div>
 
           <div className="charts-row">
-            <div className="card">
+            <div className="chart-block">
               <p className="chart-title">Distribución por tipo</p>
               {porTipo.length === 0 ? (
                 <div className="empty-state">Sin datos para este mes.</div>
@@ -159,15 +184,15 @@ export function Dashboard() {
                 </ResponsiveContainer>
               )}
             </div>
-            <div className="card">
+            <div className="chart-block">
               <p className="chart-title">Evolución mensual</p>
               <ResponsiveContainer width="100%" height={260}>
                 <BarChart data={evolucion}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#eee" />
-                  <XAxis dataKey="mes" tick={{ fontSize: 12 }} />
-                  <YAxis tick={{ fontSize: 12 }} />
-                  <Tooltip formatter={(v) => formatMonto(Number(v))} />
-                  <Bar dataKey="total" fill="#2563eb" radius={[4, 4, 0, 0]} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
+                  <XAxis dataKey="mes" tick={{ fontSize: 12 }} axisLine={{ stroke: 'var(--border)' }} tickLine={false} />
+                  <YAxis tick={{ fontSize: 12 }} axisLine={false} tickLine={false} />
+                  <Tooltip formatter={(v) => formatMonto(Number(v))} cursor={{ fill: 'var(--bg-alt)' }} />
+                  <Bar dataKey="total" fill="var(--accent)" radius={[3, 3, 0, 0]} maxBarSize={36} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
